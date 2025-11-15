@@ -1,5 +1,6 @@
 import { holidays } from '@/data/holidays';
 import Countdown from '@/components/Countdown';
+import HolidayList from '@/components/HolidayList';
 import LeaveSuggestions from '@/components/LeaveSuggestions';
 
 export default function Home() {
@@ -8,6 +9,7 @@ export default function Home() {
       <div className="text-center w-full max-w-6xl">
         <h1 className="text-5xl md:text-6xl font-bold mb-8">Kapan Libur?</h1>
         <Countdown holidays={holidays} />
+        <HolidayList holidays={holidays} />
         <LeaveSuggestions holidays={holidays} />
       </div>
     </main>

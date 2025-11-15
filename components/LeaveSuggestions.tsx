@@ -3,7 +3,7 @@
 import { Holiday } from '@/types';
 import { getUpcomingHolidays } from '@/utils/holidayUtils';
 import { findLeaveSuggestions } from '@/utils/leaveSuggestionUtils';
-import { formatDate, getDayName } from '@/utils/dateUtils';
+import { formatDate } from '@/utils/dateUtils';
 import { useMemo } from 'react';
 
 interface LeaveSuggestionsProps {
@@ -13,17 +13,42 @@ interface LeaveSuggestionsProps {
 export default function LeaveSuggestions({ holidays }: LeaveSuggestionsProps) {
   const suggestions = useMemo(() => {
     const upcomingHolidays = getUpcomingHolidays(holidays);
-    return findLeaveSuggestions(upcomingHolidays).slice(0, 5);
+    const closest3Holidays = upcomingHolidays.slice(0, 3);
+    const allSuggestions = findLeaveSuggestions(upcomingHolidays);
+    
+    // Map each of the closest 3 holidays to their leave suggestions
+    return closest3Holidays.map((holiday) => {
+      // Find the suggestion that includes this holiday
+      // A suggestion can include multiple holidays, so check if the holiday name is in the suggestion's holiday name
+      const suggestion = allSuggestions.find((s) => {
+        const holidayDate = new Date(holiday.date);
+        holidayDate.setHours(0, 0, 0, 0);
+        const suggestionDate = new Date(s.holidayDate);
+        suggestionDate.setHours(0, 0, 0, 0);
+        
+        // Check if this holiday's date matches the suggestion's holiday date
+        // or if the holiday name is included in the suggestion's holiday names
+        return suggestionDate.getTime() === holidayDate.getTime() ||
+               s.holidayName.includes(holiday.name);
+      });
+      
+      return {
+        holiday: holiday,
+        suggestion: suggestion,
+      };
+    });
   }, [holidays]);
 
-  if (suggestions.length === 0) {
+  const hasSuggestions = suggestions.some((item) => item.suggestion !== undefined);
+
+  if (!hasSuggestions) {
     return (
       <div className="mt-12 p-8 bg-gray-800 rounded-xl max-w-4xl mx-auto">
         <h3 className="text-2xl font-semibold mb-6 text-blue-400">
-          💡 Saran Cuti untuk Libur Panjang
+          💡 Rekomendasi Tanggal Cuti
         </h3>
         <p className="text-gray-400">
-          Tidak ada saran cuti yang dapat dibuat untuk libur panjang.
+          Tidak ada rekomendasi cuti untuk 3 libur nasional terdekat.
         </p>
       </div>
     );
@@ -32,24 +57,34 @@ export default function LeaveSuggestions({ holidays }: LeaveSuggestionsProps) {
   return (
     <div className="mt-12 p-8 bg-gray-800 rounded-xl max-w-4xl mx-auto">
       <h3 className="text-2xl font-semibold mb-6 text-blue-400">
-        💡 Saran Cuti untuk Libur Panjang
+        💡 Rekomendasi Tanggal Cuti
       </h3>
       <div className="space-y-4">
-        {suggestions.map((suggestion, index) => {
-          const leaveDatesStr = suggestion.leaveDays
-            .map((d) => `${getDayName(d)}, ${formatDate(d)}`)
-            .join(', ');
+        {suggestions.map((item, index) => {
+          if (!item.suggestion) {
+            return null;
+          }
 
-          const dateRange =
-            suggestion.startDate.getTime() === suggestion.endDate.getTime()
-              ? `${getDayName(suggestion.holidayDate)}, ${formatDate(
-                  suggestion.holidayDate
-                )}`
-              : `${getDayName(suggestion.startDate)}, ${formatDate(
-                  suggestion.startDate
-                )} - ${getDayName(suggestion.endDate)}, ${formatDate(
-                  suggestion.endDate
-                )}`;
+          // Get the holiday date
+          const holidayDate = new Date(item.holiday.date);
+          holidayDate.setHours(0, 0, 0, 0);
+
+          // Calculate distance from each leave date to the holiday date
+          // and sort by closest distance, then take top 3
+          const leaveDatesWithDistance = item.suggestion.leaveDays.map((leaveDate) => {
+            const date = new Date(leaveDate);
+            date.setHours(0, 0, 0, 0);
+            const distance = Math.abs(date.getTime() - holidayDate.getTime());
+            return { date: leaveDate, distance };
+          });
+
+          // Sort by distance (closest first) and take top 3
+          const top3LeaveDates = leaveDatesWithDistance
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 3)
+            .map((item) => formatDate(item.date));
+
+          const leaveDatesStr = top3LeaveDates.join(', ');
 
           return (
             <div
@@ -57,22 +92,13 @@ export default function LeaveSuggestions({ holidays }: LeaveSuggestionsProps) {
               className="bg-gray-900 p-6 rounded-lg border-l-4 border-blue-500"
             >
               <h4 className="text-xl font-semibold mb-2 text-gray-100">
-                {index + 1}. {suggestion.holidayName}
+                {item.holiday.name}
               </h4>
-              <p className="text-gray-300 mb-2">
-                <strong>Periode Libur:</strong> {dateRange}
-              </p>
-              <p className="text-gray-300 mb-2">
+              <p className="text-gray-300">
                 <strong className="text-blue-400 font-semibold">
-                  Ambil Cuti:
+                  Rekomendasi Tanggal Cuti:
                 </strong>{' '}
                 {leaveDatesStr}
-              </p>
-              <p className="text-gray-300">
-                <strong className="text-green-400 font-semibold">
-                  Total Libur Berturut-turut: {suggestion.totalDays} hari
-                </strong>{' '}
-                (dengan {suggestion.leaveDaysCount} hari cuti)
               </p>
             </div>
           );

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Holiday } from '@/types';
 import { findNextHoliday } from '@/utils/holidayUtils';
+import { formatDate, getDayName } from '@/utils/dateUtils';
 
 interface CountdownProps {
   holidays: Holiday[];
@@ -11,8 +12,8 @@ interface CountdownProps {
 export default function Countdown({ holidays }: CountdownProps) {
   const [countdown, setCountdown] = useState<{
     days: number;
-    hours: number;
     holidayName: string;
+    holidayDate: Date;
   } | null>(null);
 
   useEffect(() => {
@@ -27,30 +28,27 @@ export default function Countdown({ holidays }: CountdownProps) {
       if (difference <= 0) {
         setCountdown({
           days: 0,
-          hours: 0,
           holidayName: nextHoliday.name,
+          holidayDate: holidayDate,
         });
         return;
       }
 
-      // Calculate days and hours only
+      // Calculate days only
       const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-      const hours = Math.floor(
-        (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-      );
 
       setCountdown({
         days,
-        hours,
         holidayName: nextHoliday.name,
+        holidayDate: holidayDate,
       });
     };
 
     // Initialize
     updateCountdown();
 
-    // Update every minute (since we only show days and hours)
-    const interval = setInterval(updateCountdown, 60000);
+    // Update every hour (since we only show days)
+    const interval = setInterval(updateCountdown, 3600000);
 
     return () => clearInterval(interval);
   }, [holidays]);
@@ -60,19 +58,21 @@ export default function Countdown({ holidays }: CountdownProps) {
   }
 
   const formattedDays = countdown.days.toString().padStart(2, '0');
-  const formattedHours = countdown.hours.toString().padStart(2, '0');
 
   return (
     <div className="text-center">
-      <h2 className="text-3xl md:text-4xl font-semibold mb-8 text-gray-100">
+      <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-100">
         {countdown.holidayName}
       </h2>
+      <p className="text-xl md:text-2xl text-gray-300 mb-8">
+        {getDayName(countdown.holidayDate)}, {formatDate(countdown.holidayDate)}
+      </p>
       <div className="text-4xl md:text-5xl font-semibold mb-12">
-        {countdown.days === 0 && countdown.hours === 0 ? (
+        {countdown.days === 0 ? (
           <span>Libur sudah tiba!</span>
         ) : (
           <span>
-            {formattedDays} hari, {formattedHours} jam
+            {formattedDays} hari
           </span>
         )}
       </div>
