@@ -1,4 +1,4 @@
-# Kapan Libur?
+# Kapan Libur Lagi?
 
 A modern web application built with Next.js, React, TypeScript, and Tailwind CSS that shows countdown to the next Indonesian national holiday and suggests optimal leave dates to maximize consecutive holidays.
 
