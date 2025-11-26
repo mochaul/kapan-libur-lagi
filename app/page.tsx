@@ -1,9 +1,13 @@
-import { holidays } from '@/data/holidays';
+import { fallbackHolidays } from '@/data/holidays';
 import Countdown from '@/components/Countdown';
 import HolidayList from '@/components/HolidayList';
 import LeaveSuggestions from '@/components/LeaveSuggestions';
+import { getHolidays } from '@/utils/holidayFetcher';
 
-export default function Home() {
+export default async function Home() {
+  const fetchedHolidays = await getHolidays();
+  const holidays = fetchedHolidays.length > 0 ? fetchedHolidays : fallbackHolidays;
+
   return (
     <div className="flex flex-col items-center justify-center p-4 md:p-6 lg:p-8 py-8 md:py-12">
       <div className="text-center w-full max-w-6xl">
