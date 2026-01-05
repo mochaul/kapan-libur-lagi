@@ -1,6 +1,6 @@
 import { Holiday } from '@/types';
 
-export const holidays: Holiday[] = [
+export const fallbackHolidays: Holiday[] = [
   { name: "Hari Raya Natal", date: "2025-12-25" },
   { name: "Tahun Baru Masehi", date: "2026-01-01" },
   { name: "Isra Mi'raj", date: "2026-01-16" },
